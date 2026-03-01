@@ -4,8 +4,7 @@ import type { BlogPost } from '../types';
 
 export const getBlogPostsApi = async (): Promise<BlogPost[]> => {
   try {
-    const res = await apiClient.get<BlogPost[]>('/blog');
-    return res.data;
+    return await apiClient.get('/blog') as BlogPost[];
   } catch {
     return mockBlogPosts;
   }
@@ -13,10 +12,10 @@ export const getBlogPostsApi = async (): Promise<BlogPost[]> => {
 
 export const saveBlogPostApi = async (post: BlogPost): Promise<BlogPost> => {
   try {
-    const res = post.id
-      ? await apiClient.put<BlogPost>(`/blog/${post.id}`, post)
-      : await apiClient.post<BlogPost>('/blog', post);
-    return res.data;
+    const data = post.id
+      ? await apiClient.put(`/blog/${post.id}`, post)
+      : await apiClient.post('/blog', post);
+    return data as BlogPost;
   } catch {
     await new Promise((r) => setTimeout(r, 400));
     return { ...post, id: post.id || `post-${Date.now()}` };

@@ -4,8 +4,7 @@ import type { ClientAccount, ClientPermissions } from '../types';
 
 export const getClientAccountApi = async (): Promise<ClientAccount> => {
   try {
-    const res = await apiClient.get<ClientAccount>('/client');
-    return res.data;
+    return await apiClient.get('/client') as ClientAccount;
   } catch {
     return mockClientAccount;
   }

@@ -24,8 +24,8 @@ const mockClientUser: User = {
 
 export const loginApi = async (email: string, password: string): Promise<LoginResponse> => {
   try {
-    const res = await apiClient.post<LoginResponse>('/auth/login', { email, password });
-    return res.data;
+    const data = await apiClient.post('/auth/login', { email, password });
+    return data as LoginResponse;
   } catch {
     await new Promise((r) => setTimeout(r, 600));
     if (email.includes('admin') || password === 'admin') {
@@ -37,8 +37,8 @@ export const loginApi = async (email: string, password: string): Promise<LoginRe
 
 export const getMeApi = async (): Promise<User> => {
   try {
-    const res = await apiClient.get<User>('/auth/me');
-    return res.data;
+    const data = await apiClient.get('/auth/me');
+    return data as User;
   } catch {
     const token = localStorage.getItem('neovidia_token');
     if (token === 'mock-admin-token') return mockAdminUser;

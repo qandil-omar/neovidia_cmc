@@ -4,8 +4,7 @@ import type { Lead } from '../types';
 
 export const getLeadsApi = async (): Promise<Lead[]> => {
   try {
-    const res = await apiClient.get<Lead[]>('/leads');
-    return res.data;
+    return await apiClient.get('/leads') as Lead[];
   } catch {
     return mockLeads;
   }
@@ -13,7 +12,7 @@ export const getLeadsApi = async (): Promise<Lead[]> => {
 
 export const updateLeadStatusApi = async (id: string, status: Lead['status']): Promise<void> => {
   try {
-    await apiClient.patch(`/leads/${id}`, { status });
+    await apiClient.put(`/leads/${id}`, { status });
   } catch {
     await new Promise((r) => setTimeout(r, 200));
   }

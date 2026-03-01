@@ -4,8 +4,7 @@ import type { SiteSettings, NavigationItem } from '../types';
 
 export const getSettingsApi = async (): Promise<SiteSettings> => {
   try {
-    const res = await apiClient.get<SiteSettings>('/settings');
-    return res.data;
+    return await apiClient.get('/settings') as SiteSettings;
   } catch {
     return mockSiteSettings;
   }
@@ -21,8 +20,7 @@ export const saveSettingsApi = async (settings: Partial<SiteSettings>): Promise<
 
 export const getNavigationApi = async (): Promise<NavigationItem[]> => {
   try {
-    const res = await apiClient.get<NavigationItem[]>('/navigation');
-    return res.data;
+    return await apiClient.get('/navigation') as NavigationItem[];
   } catch {
     return mockNavigation;
   }

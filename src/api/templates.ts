@@ -4,8 +4,7 @@ import type { TemplateConfig } from '../types';
 
 export const getTemplatesApi = async (): Promise<TemplateConfig[]> => {
   try {
-    const res = await apiClient.get<TemplateConfig[]>('/templates');
-    return res.data;
+    return await apiClient.get('/templates') as TemplateConfig[];
   } catch {
     return allTemplates;
   }
@@ -19,13 +18,6 @@ export const activateTemplateApi = async (id: string): Promise<void> => {
   }
 };
 
-export const uploadTemplateApi = async (file: File): Promise<TemplateConfig> => {
-  try {
-    const formData = new FormData();
-    formData.append('template', file);
-    const res = await apiClient.post<TemplateConfig>('/templates/upload', formData);
-    return res.data;
-  } catch {
-    throw new Error('Template upload requires a running backend server');
-  }
+export const uploadTemplateApi = async (_file: File): Promise<TemplateConfig> => {
+  throw new Error('Template upload requires a running backend server');
 };

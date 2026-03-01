@@ -4,8 +4,7 @@ import type { Page, PageContent } from '../types';
 
 export const getPagesApi = async (): Promise<Page[]> => {
   try {
-    const res = await apiClient.get<Page[]>('/pages');
-    return res.data;
+    return await apiClient.get('/pages') as Page[];
   } catch {
     return mockPages;
   }
@@ -13,8 +12,7 @@ export const getPagesApi = async (): Promise<Page[]> => {
 
 export const getPageApi = async (id: string): Promise<Page | undefined> => {
   try {
-    const res = await apiClient.get<Page>(`/pages/${id}`);
-    return res.data;
+    return await apiClient.get(`/pages/${id}`) as Page;
   } catch {
     return mockPages.find((p) => p.id === id);
   }

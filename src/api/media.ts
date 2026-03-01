@@ -1,11 +1,16 @@
-import apiClient from './client';
 import { mockMedia } from '../data/mockData';
 import type { MediaItem } from '../types';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const getToken = () => localStorage.getItem('neovidia_token');
+
 export const getMediaApi = async (): Promise<MediaItem[]> => {
   try {
-    const res = await apiClient.get<MediaItem[]>('/media');
-    return res.data;
+    const res = await fetch(`${BASE_URL}/media`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error();
+    return res.json();
   } catch {
     return mockMedia;
   }
@@ -15,18 +20,22 @@ export const uploadMediaApi = async (file: File): Promise<MediaItem> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await apiClient.post<MediaItem>('/media/upload', formData);
-    return res.data;
+    const res = await fetch(`${BASE_URL}/media/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getToken()}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error();
+    return res.json();
   } catch {
     await new Promise((r) => setTimeout(r, 600));
-    const url = URL.createObjectURL(file);
     return {
       id: `m-${Date.now()}`,
       filename: file.name,
       originalName: file.name,
       type: file.type.startsWith('image/') ? 'image' : 'document',
       size: file.size,
-      url,
+      url: URL.createObjectURL(file),
       uploadedAt: new Date().toISOString().split('T')[0],
     };
   }
@@ -34,7 +43,11 @@ export const uploadMediaApi = async (file: File): Promise<MediaItem> => {
 
 export const deleteMediaApi = async (id: string): Promise<void> => {
   try {
-    await apiClient.delete(`/media/${id}`);
+    const res = await fetch(`${BASE_URL}/media/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error();
   } catch {
     await new Promise((r) => setTimeout(r, 200));
   }
