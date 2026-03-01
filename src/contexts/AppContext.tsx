@@ -1,119 +1,154 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import {
-  mockTemplates,
-  mockPages,
-  mockMedia,
-  mockLeads,
-  mockClientAccount,
-  mockSiteSettings,
-  mockNavigationMenu,
-  mockActivityLog,
-} from '../mockData';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { allTemplates } from '../data/templateConfigs';
+import { mockPages, mockBlogPosts, mockMedia, mockLeads, mockClientAccount, mockSiteSettings, mockNavigation } from '../data/mockData';
+import type {
+  TemplateConfig,
+  Page,
+  BlogPost,
+  MediaItem,
+  Lead,
+  ClientAccount,
+  SiteSettings,
+  NavigationItem,
+  ToastMessage,
+  Lang,
+} from '../types';
 
 interface AppContextType {
-  templates: typeof mockTemplates;
-  pages: typeof mockPages;
-  media: typeof mockMedia;
-  leads: typeof mockLeads;
-  clientAccount: typeof mockClientAccount;
-  siteSettings: typeof mockSiteSettings;
-  navigationMenu: typeof mockNavigationMenu;
-  activityLog: typeof mockActivityLog;
-  updateTemplate: (id: string) => void;
-  updatePage: (id: string, data: any) => void;
-  updateSiteSettings: (category: string, data: any) => void;
-  updateClientPermissions: (permissions: any) => void;
-  updateLeadStatus: (id: string, status: string) => void;
-  addNavigationItem: (item: any) => void;
-  deleteNavigationItem: (id: string) => void;
-  updateNavigationMenu: (items: any[]) => void;
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
-  toast: { show: boolean; message: string; type: string } | null;
+  activeTemplateId: string;
+  templates: TemplateConfig[];
+  activeTemplate: TemplateConfig | undefined;
+  pages: Page[];
+  blogPosts: BlogPost[];
+  media: MediaItem[];
+  leads: Lead[];
+  clientAccount: ClientAccount;
+  siteSettings: SiteSettings;
+  navigation: NavigationItem[];
+  lang: Lang;
+  toasts: ToastMessage[];
+  newLeadsCount: number;
+
+  setActiveTemplate: (id: string) => void;
+  updatePage: (id: string, data: Partial<Page>) => void;
+  updateBlogPost: (post: BlogPost) => void;
+  deleteBlogPost: (id: string) => void;
+  addMedia: (item: MediaItem) => void;
+  deleteMedia: (id: string) => void;
+  updateLeadStatus: (id: string, status: Lead['status']) => void;
+  deleteLead: (id: string) => void;
+  updateClientAccount: (data: Partial<ClientAccount>) => void;
+  updateSiteSettings: (data: Partial<SiteSettings>) => void;
+  updateNavigation: (items: NavigationItem[]) => void;
+  setLang: (lang: Lang) => void;
+  addToast: (message: string, type: ToastMessage['type']) => void;
+  removeToast: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [templates, setTemplates] = useState(mockTemplates);
-  const [pages, setPages] = useState(mockPages);
-  const [media] = useState(mockMedia);
-  const [leads, setLeads] = useState(mockLeads);
-  const [clientAccount, setClientAccount] = useState(mockClientAccount);
-  const [siteSettings, setSiteSettings] = useState(mockSiteSettings);
-  const [navigationMenu, setNavigationMenu] = useState(mockNavigationMenu);
-  const [activityLog] = useState(mockActivityLog);
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: string } | null>(null);
+  const [activeTemplateId, setActiveTemplateId] = useState('modern-business');
+  const [templates] = useState<TemplateConfig[]>(allTemplates);
+  const [pages, setPages] = useState<Page[]>(mockPages);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(mockBlogPosts);
+  const [media, setMedia] = useState<MediaItem[]>(mockMedia);
+  const [leads, setLeads] = useState<Lead[]>(mockLeads);
+  const [clientAccount, setClientAccount] = useState<ClientAccount>(mockClientAccount);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(mockSiteSettings);
+  const [navigation, setNavigation] = useState<NavigationItem[]>(mockNavigation);
+  const [lang, setLang] = useState<Lang>('ar');
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const updateTemplate = (id: string) => {
-    setTemplates((prev) =>
-      prev.map((t) => ({ ...t, isActive: t.id === id }))
-    );
-  };
+  const activeTemplate = templates.find((t) => t.id === activeTemplateId);
+  const newLeadsCount = leads.filter((l) => l.status === 'new').length;
 
-  const updatePage = (id: string, data: any) => {
-    setPages((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...data } : p))
-    );
-  };
+  const setActiveTemplate = useCallback((id: string) => setActiveTemplateId(id), []);
 
-  const updateSiteSettings = (category: string, data: any) => {
-    setSiteSettings((prev) => ({
-      ...prev,
-      [category]: { ...prev[category as keyof typeof prev], ...data },
-    }));
-  };
+  const updatePage = useCallback((id: string, data: Partial<Page>) => {
+    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
+  }, []);
 
-  const updateClientPermissions = (permissions: any) => {
-    setClientAccount((prev) => ({
-      ...prev,
-      permissions: { ...prev.permissions, ...permissions },
-    }));
-  };
+  const updateBlogPost = useCallback((post: BlogPost) => {
+    setBlogPosts((prev) => {
+      const idx = prev.findIndex((p) => p.id === post.id);
+      if (idx >= 0) return prev.map((p) => (p.id === post.id ? post : p));
+      return [...prev, post];
+    });
+  }, []);
 
-  const updateLeadStatus = (id: string, status: string) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === id ? { ...lead, status } : lead))
-    );
-  };
+  const deleteBlogPost = useCallback((id: string) => {
+    setBlogPosts((prev) => prev.filter((p) => p.id !== id));
+  }, []);
 
-  const addNavigationItem = (item: any) => {
-    setNavigationMenu((prev) => [...prev, { ...item, id: Date.now().toString() }]);
-  };
+  const addMedia = useCallback((item: MediaItem) => {
+    setMedia((prev) => [item, ...prev]);
+  }, []);
 
-  const deleteNavigationItem = (id: string) => {
-    setNavigationMenu((prev) => prev.filter((item) => item.id !== id));
-  };
+  const deleteMedia = useCallback((id: string) => {
+    setMedia((prev) => prev.filter((m) => m.id !== id));
+  }, []);
 
-  const updateNavigationMenu = (items: any[]) => {
-    setNavigationMenu(items);
-  };
+  const updateLeadStatus = useCallback((id: string, status: Lead['status']) => {
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+  }, []);
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  const deleteLead = useCallback((id: string) => {
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  const updateClientAccount = useCallback((data: Partial<ClientAccount>) => {
+    setClientAccount((prev) => ({ ...prev, ...data }));
+  }, []);
+
+  const updateSiteSettings = useCallback((data: Partial<SiteSettings>) => {
+    setSiteSettings((prev) => ({ ...prev, ...data }));
+  }, []);
+
+  const updateNavigation = useCallback((items: NavigationItem[]) => {
+    setNavigation(items);
+  }, []);
+
+  const addToast = useCallback((message: string, type: ToastMessage['type']) => {
+    const id = `toast-${Date.now()}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   return (
     <AppContext.Provider
       value={{
+        activeTemplateId,
         templates,
+        activeTemplate,
         pages,
+        blogPosts,
         media,
         leads,
         clientAccount,
         siteSettings,
-        navigationMenu,
-        activityLog,
-        updateTemplate,
+        navigation,
+        lang,
+        toasts,
+        newLeadsCount,
+        setActiveTemplate,
         updatePage,
-        updateSiteSettings,
-        updateClientPermissions,
+        updateBlogPost,
+        deleteBlogPost,
+        addMedia,
+        deleteMedia,
         updateLeadStatus,
-        addNavigationItem,
-        deleteNavigationItem,
-        updateNavigationMenu,
-        showToast,
-        toast,
+        deleteLead,
+        updateClientAccount,
+        updateSiteSettings,
+        updateNavigation,
+        setLang,
+        addToast,
+        removeToast,
       }}
     >
       {children}
@@ -122,9 +157,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within AppProvider');
-  }
-  return context;
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
 };
